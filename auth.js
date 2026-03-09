@@ -79,6 +79,7 @@ const Auth = {
   async onLogin() {
     const user = await this.getUser();
     if (!user) return;
+    window._devlearnUserId = user.id; // set before sync uses it
     this.renderAuthButton(user);
     // Push local progress under user ID, then pull latest from account
     if (window.Sync) await Sync.onLogin();

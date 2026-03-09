@@ -15,19 +15,9 @@ function getDeviceId() {
 }
 
 // Get the best available sync key: user ID > device ID
-function parseJwt(token) {
-  try {
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64 + '=='.slice(0, (4 - base64.length % 4) % 4);
-    return JSON.parse(atob(padded));
-  } catch { return null; }
-}
-
 function getSyncKey() {
-  if (window.Auth?.session?.access_token) {
-    const payload = parseJwt(window.Auth.session.access_token);
-    if (payload?.sub) return 'user_' + payload.sub;
-  }
+  // Use cached user ID set by auth.js after login
+  if (window._devlearnUserId) return 'user_' + window._devlearnUserId;
   return getDeviceId();
 }
 
