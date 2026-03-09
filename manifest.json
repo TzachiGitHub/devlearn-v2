@@ -1,0 +1,13 @@
+{
+  "name": "DevLearn",
+  "short_name": "DevLearn",
+  "description": "ADHD-friendly developer learning — one card at a time",
+  "start_url": "/devlearn-v2/",
+  "display": "standalone",
+  "background_color": "#0F1117",
+  "theme_color": "#7C3AED",
+  "icons": [
+    { "src": "https://fav.farm/⚡", "sizes": "192x192", "type": "image/png" },
+    { "src": "https://fav.farm/⚡", "sizes": "512x512", "type": "image/png" }
+  ]
+}

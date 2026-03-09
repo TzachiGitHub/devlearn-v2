@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0F1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>DevLearn</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ══════ PROGRESS BAR (top, always visible during lesson) ══════ -->
+  <div id="progress-bar" class="progress-bar hidden">
+    <div id="progress-fill" class="progress-fill"></div>
+  </div>
+
+  <!-- ══════ HOME SCREEN ══════ -->
+  <div id="screen-home" class="screen active">
+    <div class="home-scroll">
+      <header class="home-header">
+        <div class="app-logo">DevLearn</div>
+        <div id="streak-display" class="streak-badge"></div>
+      </header>
+
+      <div id="xp-display" class="xp-badge">0 XP</div>
+
+      <div id="welcome-back" class="welcome-back hidden">
+        <p>Welcome back! Let's pick up where you left off</p>
+      </div>
+
+      <button id="continue-card" class="continue-card" onclick="app.continueLearning()">
+        <span class="continue-label">Continue &rarr;</span>
+        <span id="continue-title" class="continue-title"></span>
+        <span id="continue-meta" class="continue-meta"></span>
+      </button>
+
+      <h2 class="section-title">Topics</h2>
+      <div id="topic-map" class="topic-map"></div>
+    </div>
+  </div>
+
+  <!-- ══════ LESSON SCREEN ══════ -->
+  <div id="screen-lesson" class="screen">
+    <div class="lesson-header">
+      <button class="btn-exit" onclick="app.exitLesson()" aria-label="Exit lesson">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div id="card-indicator" class="card-indicator"></div>
+    </div>
+    <div id="card-stage" class="card-stage">
+      <!-- Cards rendered here dynamically -->
+    </div>
+    <div class="lesson-nav">
+      <button id="btn-prev" class="btn-nav" onclick="app.prevCard()" aria-label="Previous card">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <button id="btn-next" class="btn-nav btn-nav-primary" onclick="app.advanceCard()" aria-label="Next card">
+        Next <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════ CELEBRATION OVERLAY ══════ -->
+  <div id="celebration" class="celebration hidden">
+    <div class="celebration-content">
+      <div class="celebration-emoji">🎉</div>
+      <h2 class="celebration-heading">Chapter complete!</h2>
+      <div id="celebration-xp" class="celebration-xp"></div>
+      <ul id="celebration-list" class="celebration-list"></ul>
+      <button id="btn-celebrate-next" class="btn-celebrate-next" onclick="app.nextChapter()">Continue &rarr;</button>
+      <button class="btn-celebrate-home" onclick="app.showHome()">Back to home</button>
+    </div>
+  </div>
+
+  <!-- ══════ XP FLOAT ══════ -->
+  <div id="xp-float" class="xp-float"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
