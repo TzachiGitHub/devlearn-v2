@@ -10,5 +10,35 @@
   "icons": [
     { "src": "https://fav.farm/⚡", "sizes": "192x192", "type": "image/png" },
     { "src": "https://fav.farm/⚡", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Drive Mode",
+      "short_name": "Drive 🚗",
+      "description": "Fully passive audio learning — no taps required",
+      "url": "./audio.html?mode=driving",
+      "icons": [{ "src": "https://fav.farm/🚗", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Run Mode",
+      "short_name": "Run 🏃",
+      "description": "Shorter chunks, higher energy — for your morning run",
+      "url": "./audio.html?mode=running",
+      "icons": [{ "src": "https://fav.farm/🏃", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Commute Mode",
+      "short_name": "Commute 🚌",
+      "description": "Quiz taps enabled — for the daily commute",
+      "url": "./audio.html?mode=commuting",
+      "icons": [{ "src": "https://fav.farm/🚌", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Walk Mode",
+      "short_name": "Walk 🚶",
+      "description": "Full quiz mode — for a contemplative walk",
+      "url": "./audio.html?mode=walking",
+      "icons": [{ "src": "https://fav.farm/🚶", "sizes": "192x192", "type": "image/png" }]
+    }
   ]
 }
