@@ -464,3 +464,35 @@ strong  { font-weight: 700; color: #fff; }
   75%  { opacity: 1; }
   100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
 }
+
+/* ── Answer required hint ── */
+.answer-required-hint {
+  position: fixed;
+  bottom: 90px; left: 50%; transform: translateX(-50%);
+  background: rgba(245,158,11,.95);
+  color: #000; font-size: 14px; font-weight: 700;
+  padding: 10px 20px; border-radius: 20px;
+  pointer-events: none; z-index: 999;
+  opacity: 0;
+}
+.answer-required-hint.hint-pop {
+  animation: hintPop 2s ease forwards;
+}
+@keyframes hintPop {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}
+
+/* ── Next button shake ── */
+.btn-nav.shake-hint {
+  animation: shakeBtn .4s ease;
+}
+@keyframes shakeBtn {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-8px); }
+  40%     { transform: translateX(8px); }
+  60%     { transform: translateX(-5px); }
+  80%     { transform: translateX(5px); }
+}
