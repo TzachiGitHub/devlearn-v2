@@ -445,6 +445,7 @@ const app = {
       this.completeChapter();
     } else {
       this.currentCardIndex++;
+    document.dispatchEvent(new Event("devlearn:cardAdvanced"));
       this.answered = false;
       this.renderCard('right');
     }
