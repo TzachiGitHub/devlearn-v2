@@ -119,6 +119,8 @@ const Sync = {
   userId: null,
 
   async init() {
+    if (this._started) return;
+    this._started = true;
     // Initial pull
     const updated = await pullProgress();
     if (updated) {
@@ -150,4 +152,8 @@ const Sync = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => Sync.init());
+// Wait for auth to restore session before first sync
+// Auth fires 'devlearn:authReady' when done
+document.addEventListener('devlearn:authReady', () => Sync.init());
+// Fallback: if no auth event in 2s, sync anyway (logged-out users)
+setTimeout(() => { if (!Sync._started) Sync.init(); }, 2000);
