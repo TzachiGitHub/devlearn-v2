@@ -556,3 +556,71 @@ const app = {
 };
 
 document.addEventListener('DOMContentLoaded', () => app.init());
+
+// ============================================================
+// AUDIO — Web Speech API
+// ============================================================
+const CardAudio = {
+  synth: window.speechSynthesis,
+  speaking: false,
+
+  getText(card) {
+    switch (card.type) {
+      case 'concept':  return `${card.title}. ${card.body?.replace(/<[^>]+>/g,'')}. ${card.highlight||''}`;
+      case 'analogy':  return `Think of it like ${card.realWorld?.title}. ${card.realWorld?.explanation} ${card.connection||''}`;
+      case 'quiz':     return `Question: ${card.question}. Your options are: ${card.options?.join('. ')}`;
+      case 'code':     return `${card.label||'Code example'}. ${card.why||''}`;
+      case 'fill-blank': return `Fill in the blank. ${card.hint||''}. Options: ${card.options?.join(', ')}`;
+      case 'summary':  return `${card.title}. You earned ${card.xpEarned} XP. ${card.recap?.join('. ')||''}`;
+      default: return '';
+    }
+  },
+
+  speak(card) {
+    if (!this.synth) return;
+    this.synth.cancel();
+    const text = this.getText(card);
+    if (!text) return;
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.05; u.pitch = 1; u.volume = 1;
+    const voices = this.synth.getVoices();
+    const good = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || (v.lang==='en-US' && !v.name.includes('Compact')));
+    if (good) u.voice = good;
+    u.onstart = () => { this.speaking = true; this.updateBtn(true); };
+    u.onend = u.onerror = () => { this.speaking = false; this.updateBtn(false); };
+    this.synth.speak(u);
+  },
+
+  toggle(card) {
+    if (this.speaking) { this.synth.cancel(); this.speaking = false; this.updateBtn(false); }
+    else this.speak(card);
+  },
+
+  stop() { this.synth?.cancel(); this.speaking = false; this.updateBtn(false); },
+
+  updateBtn(active) {
+    const btn = document.getElementById('audio-listen-btn');
+    if (btn) { btn.textContent = active ? '⏸' : '🎧'; btn.title = active ? 'Pause' : 'Listen'; }
+  }
+};
+
+// Patch renderCard to add listen button + auto-stop on advance
+const _renderCard = app.renderCard.bind(app);
+app.renderCard = function(dir) {
+  CardAudio.stop();
+  _renderCard(dir);
+  // Add listen button after render
+  requestAnimationFrame(() => {
+    const header = document.querySelector('.lesson-header');
+    if (header && !document.getElementById('audio-listen-btn')) {
+      const btn = document.createElement('button');
+      btn.id = 'audio-listen-btn';
+      btn.textContent = '🎧';
+      btn.title = 'Listen';
+      btn.style.cssText = 'background:var(--surface2);border:1px solid var(--border);color:var(--text);width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+      btn.onclick = () => CardAudio.toggle(app.cards[app.currentCardIndex]);
+      header.insertBefore(btn, header.querySelector('.card-indicator'));
+    }
+  });
+};
