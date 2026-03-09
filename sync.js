@@ -1,11 +1,11 @@
-// DevLearn — Supabase Cross-Device Sync
-// Silently syncs progress between phone and laptop via Supabase
+// DevLearn v2 — Supabase Cross-Device Sync
+// Uses logged-in user ID when available, falls back to device ID
 
 const SUPABASE_URL  = 'https://mqnosenddinigyurvkwx.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xbm9zZW5kZGluaWd5dXJ2a3d4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNTkxNDcsImV4cCI6MjA4ODYzNTE0N30.o78QfqJdXA2jTVENbCcP1vHbDx1jksf1LId7SFylIKA';
 const DEVICE_KEY    = 'devlearn_device_id';
 const STORAGE_KEY   = 'devlearn_v2';
-const SYNC_INTERVAL = 60000; // sync every 60s while active
+const SYNC_INTERVAL = 30000; // sync every 30s
 
 function getDeviceId() {
   let id = localStorage.getItem(DEVICE_KEY);
@@ -16,133 +16,137 @@ function getDeviceId() {
   return id;
 }
 
-async function supabaseFetch(path, options = {}) {
-  const res = await fetch(SUPABASE_URL + path, {
-    ...options,
-    headers: {
-      'apikey': SUPABASE_ANON,
-      'Authorization': 'Bearer ' + SUPABASE_ANON,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
-      ...(options.headers || {})
-    }
-  });
-  if (!res.ok) throw new Error(await res.text());
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
+// Get the best available sync key: user ID > device ID
+function getSyncKey() {
+  if (window.Auth?.session?.access_token) {
+    // Extract user ID from JWT
+    try {
+      const payload = JSON.parse(atob(window.Auth.session.access_token.split('.')[1]));
+      if (payload.sub) return 'user_' + payload.sub;
+    } catch {}
+  }
+  return getDeviceId();
 }
 
-// Push local progress to Supabase
-async function pushProgress() {
+function getAuthHeader() {
+  const token = window.Auth?.session?.access_token || SUPABASE_ANON;
+  return { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + token };
+}
+
+async function sfetch(path, opts = {}) {
   try {
-    const deviceId = getDeviceId();
-    const data = localStorage.getItem(STORAGE_KEY) || '{}';
-    await supabaseFetch('/rest/v1/progress', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({
-        device_id: deviceId,
-        data: JSON.parse(data),
-        updated_at: new Date().toISOString()
-      })
+    const res = await fetch(SUPABASE_URL + path, {
+      ...opts,
+      headers: {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal',
+        ...(opts.headers || {})
+      }
     });
-  } catch (e) {
-    // Silent fail — offline is fine
-  }
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  } catch { return null; }
 }
 
-// Pull latest progress from Supabase (whichever device is most recent)
+async function pushProgress() {
+  const key = getSyncKey();
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  await sfetch('/rest/v1/progress', {
+    method: 'POST',
+    body: JSON.stringify({
+      device_id: key,
+      data: JSON.parse(raw),
+      updated_at: new Date().toISOString()
+    })
+  });
+}
+
 async function pullProgress() {
-  try {
-    const deviceId = getDeviceId();
-    // Get all device rows for this user — we merge by taking latest updated_at
-    const rows = await supabaseFetch(
-      '/rest/v1/progress?order=updated_at.desc&limit=10'
-    );
-    if (!rows || rows.length === 0) return false;
+  const key = getSyncKey();
+  // If logged in as user, fetch their specific row
+  const rows = await sfetch(`/rest/v1/progress?device_id=eq.${encodeURIComponent(key)}&limit=1`);
+  if (!rows || rows.length === 0) return false;
 
-    // Find the most recent row that isn't this device (remote progress)
-    const remote = rows.find(r => r.device_id !== deviceId);
-    const local  = rows.find(r => r.device_id === deviceId);
+  const remote = rows[0];
+  const remoteTime = new Date(remote.updated_at).getTime();
 
-    if (!remote) return false;
+  const localRaw = localStorage.getItem(STORAGE_KEY);
+  const localData = localRaw ? JSON.parse(localRaw) : {};
+  const localTime = localData._savedAt || 0;
 
-    const remoteTime = new Date(remote.updated_at).getTime();
-    const localTime  = local ? new Date(local.updated_at).getTime() : 0;
-
-    if (remoteTime > localTime) {
-      // Remote is newer — merge remote into local
-      const localData  = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      const remoteData = remote.data;
-
-      // Merge: take higher XP, higher streak, union completed chapters
-      const merged = {
-        ...localData,
-        xp:       Math.max(localData.xp || 0, remoteData.xp || 0),
-        streak:   Math.max(localData.streak || 0, remoteData.streak || 0),
-        completed: { ...(localData.completed || {}), ...(remoteData.completed || {}) },
-        cardIndex: mergeCardIndex(localData.cardIndex, remoteData.cardIndex),
-        lastActive: remoteTime > localTime ? remoteData.lastActive : localData.lastActive
-      };
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-      return true; // progress was updated from remote
-    }
-    return false;
-  } catch (e) {
-    return false;
+  if (remoteTime > localTime) {
+    // Merge: take highest XP, streak, union completed
+    const remoteData = remote.data;
+    const merged = {
+      ...localData,
+      xp:        Math.max(localData.xp || 0, remoteData.xp || 0),
+      streak:    Math.max(localData.streak || 0, remoteData.streak || 0),
+      completed: { ...(localData.completed || {}), ...(remoteData.completed || {}) },
+      cardIndex: mergeCardIndex(localData.cardIndex, remoteData.cardIndex),
+      lastActive: remoteTime > localTime ? remoteData.lastActive : localData.lastActive,
+      _savedAt: Date.now()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    return true;
   }
+  return false;
 }
 
 function mergeCardIndex(local = {}, remote = {}) {
   const merged = { ...local };
-  for (const [key, val] of Object.entries(remote)) {
-    merged[key] = Math.max(merged[key] || 0, val || 0);
+  for (const [k, v] of Object.entries(remote)) {
+    merged[k] = Math.max(merged[k] || 0, v || 0);
   }
   return merged;
 }
 
-// Show a subtle "synced" indicator
 function showSyncBadge(text = '☁️ Synced') {
   let badge = document.getElementById('sync-badge');
   if (!badge) {
     badge = document.createElement('div');
     badge.id = 'sync-badge';
-    badge.style.cssText = `
-      position:fixed; bottom:72px; right:16px; z-index:9999;
-      background:rgba(16,185,129,.9); color:#fff;
-      font-size:11px; font-weight:700; padding:5px 10px;
-      border-radius:20px; opacity:0; transition:opacity .3s;
-      pointer-events:none;
-    `;
+    badge.style.cssText = 'position:fixed;bottom:72px;right:16px;z-index:9999;background:rgba(16,185,129,.9);color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;';
     document.body.appendChild(badge);
   }
   badge.textContent = text;
   badge.style.opacity = '1';
-  setTimeout(() => { badge.style.opacity = '0'; }, 2000);
+  setTimeout(() => { badge.style.opacity = '0'; }, 2500);
 }
 
-// Init — pull on load, then push periodically
 const Sync = {
+  userId: null,
+
   async init() {
+    // Initial pull
     const updated = await pullProgress();
     if (updated) {
-      showSyncBadge('☁️ Progress synced from other device');
-      // Refresh home screen if app is loaded
-      if (window.app && app.refreshHomeStats) {
-        app.refreshHomeStats();
-        app.renderTopicMap();
-      }
+      showSyncBadge('☁️ Progress synced');
+      if (window.app?.refreshHomeStats) { app.refreshHomeStats(); app.renderTopicMap(); }
     }
-    // Push on load
     await pushProgress();
-    // Push every 60s
-    setInterval(pushProgress, SYNC_INTERVAL);
-    // Push before tab closes
+
+    // Periodic sync
+    setInterval(async () => {
+      await pushProgress();
+      const updated = await pullProgress();
+      if (updated && window.app?.refreshHomeStats) { app.refreshHomeStats(); app.renderTopicMap(); }
+    }, SYNC_INTERVAL);
+
     window.addEventListener('beforeunload', pushProgress);
-    // Push after each card advance (hook into app)
     document.addEventListener('devlearn:cardAdvanced', pushProgress);
     document.addEventListener('devlearn:chapterComplete', pushProgress);
+  },
+
+  // Called by auth.js after login — push local progress under user ID
+  async onLogin() {
+    await pushProgress(); // now uses user ID as key
+    const updated = await pullProgress();
+    if (updated) {
+      showSyncBadge('☁️ Progress synced from your account');
+      if (window.app?.refreshHomeStats) { app.refreshHomeStats(); app.renderTopicMap(); }
+    }
   }
 };
 

@@ -76,10 +76,8 @@ const Auth = {
     const user = await this.getUser();
     if (!user) return;
     this.renderAuthButton(user);
-    // Migrate local progress to account
-    await this.migrateProgress(user.id);
-    // Refresh sync with user ID
-    if (window.Sync) Sync.userId = user.id;
+    // Push local progress under user ID, then pull latest from account
+    if (window.Sync) await Sync.onLogin();
   },
 
   async migrateProgress(userId) {
