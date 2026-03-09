@@ -426,10 +426,26 @@ const app = {
   // ── advance card ─────────────────────────────────────────
   advanceCard() {
     if (!this.answered) {
-      // Shake the next button
+      // Shake the next button and show hint
       const btn = document.getElementById('btn-next');
-      btn.style.animation = 'shake .3s ease';
-      setTimeout(() => btn.style.animation = '', 300);
+      btn.classList.remove('shake-hint');
+      void btn.offsetWidth; // reflow to restart animation
+      btn.classList.add('shake-hint');
+      setTimeout(() => btn.classList.remove('shake-hint'), 500);
+
+      // Show "tap an answer" hint on the card
+      const stage = document.getElementById('card-stage');
+      let hint = stage.querySelector('.answer-required-hint');
+      if (!hint) {
+        hint = document.createElement('div');
+        hint.className = 'answer-required-hint';
+        hint.textContent = '👆 Tap an answer to continue';
+        stage.appendChild(hint);
+      }
+      hint.classList.remove('hint-pop');
+      void hint.offsetWidth;
+      hint.classList.add('hint-pop');
+      setTimeout(() => hint.remove(), 2000);
       return;
     }
 

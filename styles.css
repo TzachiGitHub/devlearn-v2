@@ -438,3 +438,29 @@ html, body {
 /* ══════ UTILITIES ══════ */
 .hidden { display: none !important; }
 strong  { font-weight: 700; color: #fff; }
+
+/* ── Next button shake when answer required ── */
+.btn-nav.shake-hint {
+  animation: shake .4s ease !important;
+  background: #5B21B6 !important;
+}
+
+/* ── "Tap an answer" floating hint ── */
+.answer-required-hint {
+  position: absolute;
+  bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: rgba(124,58,237,.9);
+  color: #fff; font-size: 13px; font-weight: 700;
+  padding: 8px 18px; border-radius: 20px;
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; z-index: 10;
+}
+.answer-required-hint.hint-pop {
+  animation: hintPop 2s ease forwards;
+}
+@keyframes hintPop {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+}
