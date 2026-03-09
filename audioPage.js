@@ -28,6 +28,7 @@ const audioPage = (() => {
       onStateChange: handleStateChange,
       onCardChange: handleCardChange,
       onQuiz: handleQuiz,
+      onAnswerReveal: handleAnswerReveal,
       onSessionEnd: handleSessionEnd,
       onXP: handleXP
     });
@@ -46,6 +47,7 @@ const audioPage = (() => {
   }
 
   function loadNewSession() {
+    forceCloseQuizOverlay();
     const modeConfig = getModeConfig(currentMode);
     sessionData = buildSession({
       modeConfig,
@@ -121,7 +123,31 @@ const audioPage = (() => {
       pendingQuizCallback(answer);
       pendingQuizCallback = null;
     }
-    clearQuizTimer();
+    // Don't clearQuizTimer here — let onAnswerReveal handle the overlay
+    // (quiz overlay stays visible until answer is revealed and spoken)
+  }
+
+  function handleAnswerReveal(wasCorrect, answerText) {
+    const revealEl = document.getElementById('answer-reveal');
+    const overlay = document.getElementById('quiz-overlay');
+    const timerEl = document.getElementById('quiz-timer');
+
+    // Stop timer animation
+    timerEl.style.transition = 'none';
+    timerEl.style.width = '0%';
+
+    // Show answer text
+    if (answerText) {
+      revealEl.textContent = (wasCorrect ? '✅ ' : '❌ ') + answerText;
+      revealEl.classList.add('visible');
+    }
+
+    // Hide quiz buttons, keep overlay open to show answer
+    const quizButtons = overlay.querySelector('.quiz-buttons');
+    if (quizButtons) quizButtons.style.opacity = '0.3';
+
+    // Close overlay after answer is read (engine will advance card via onEnd callback)
+    // We close it when the next card starts (handleCardChange)
   }
 
   function restartSession() {
@@ -173,6 +199,13 @@ const audioPage = (() => {
 
   function handleCardChange(card, index, total) {
     cardAudioStartTime = null;
+    // Close any open quiz overlay when moving to next card
+    const overlay = document.getElementById('quiz-overlay');
+    if (overlay && overlay.classList.contains('visible')) {
+      const quizButtons = overlay.querySelector('.quiz-buttons');
+      if (quizButtons) quizButtons.style.opacity = '';
+      overlay.classList.remove('visible');
+    }
     updateCardDisplay(card, index, total);
   }
 
@@ -224,8 +257,17 @@ const audioPage = (() => {
 
   function clearQuizTimer() {
     clearInterval(quizTimerInterval);
+    // Overlay is now closed via handleCardChange when next card loads
+    // Only close immediately if we're explicitly resetting (e.g. mode switch)
+  }
+
+  function forceCloseQuizOverlay() {
     const overlay = document.getElementById('quiz-overlay');
-    overlay.classList.remove('visible');
+    const quizButtons = overlay?.querySelector('.quiz-buttons');
+    const revealEl = document.getElementById('answer-reveal');
+    if (overlay) overlay.classList.remove('visible');
+    if (quizButtons) quizButtons.style.opacity = '';
+    if (revealEl) revealEl.classList.remove('visible');
   }
 
   // ── Session end ───────────────────────────────────────────

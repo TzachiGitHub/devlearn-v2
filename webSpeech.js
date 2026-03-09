@@ -26,7 +26,13 @@ class WebSpeechPlayer {
 
     this.stop();
 
-    this.utterance = new SpeechSynthesisUtterance(transcript);
+    // Strip [pause] markers — actual quiz pause is handled by engine state machine
+    // Also strip [* ] style stage directions from transcript
+    const cleanTranscript = transcript
+      .replace(/\[pause\]/gi, '...')
+      .replace(/\[[\w\s]+\]/g, '');
+
+    this.utterance = new SpeechSynthesisUtterance(cleanTranscript);
     this.utterance.rate = this.wpmToRate(wpm) * speed;
     this.utterance.pitch = 1.0;
     this.utterance.volume = 1.0;

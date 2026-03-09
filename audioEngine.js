@@ -17,7 +17,7 @@ const SPEEDS = [0.75, 1.0, 1.25, 1.5, 2.0];
 const AUDIO_PROGRESS_KEY = 'devlearn_audio_progress';
 
 class AudioEngine {
-  constructor({ onStateChange, onCardChange, onQuiz, onSessionEnd, onXP }) {
+  constructor({ onStateChange, onCardChange, onQuiz, onAnswerReveal, onSessionEnd, onXP }) {
     this.state = PLAYER_STATES.IDLE;
     this.queue = [];
     this.currentIndex = 0;
@@ -31,6 +31,7 @@ class AudioEngine {
     this.onStateChange = onStateChange || (() => {});
     this.onCardChange = onCardChange || (() => {});
     this.onQuiz = onQuiz || (() => {});
+    this.onAnswerReveal = onAnswerReveal || (() => {});
     this.onSessionEnd = onSessionEnd || (() => {});
     this.onXP = onXP || (() => {});
 
@@ -46,6 +47,7 @@ class AudioEngine {
     this._audioCtx = null;
 
     this._loadProgress();
+    this._usingFallback = false;
   }
 
   // ── Progress persistence ──────────────────────────────────
@@ -149,8 +151,6 @@ class AudioEngine {
   }
 
   // ── Playback ──────────────────────────────────────────────
-  _usingFallback = false;
-
   _playCurrentCard() {
     const card = this._currentCard();
     if (!card) {
@@ -253,9 +253,16 @@ class AudioEngine {
       wasCorrect = answer === card.quizPrompt.correctAnswer;
     }
 
-    // Play answer reveal
+    // Play answer reveal sound
     this._setState(PLAYER_STATES.ANSWER_REVEAL);
     this._playAnswerSound(wasCorrect);
+
+    const quizResult = wasCorrect ? 'correct' : (answer === 'timeout' ? 'skipped' : 'wrong');
+
+    // Show answer reveal in UI first (300ms), then speak it
+    if (this.onAnswerReveal) {
+      this.onAnswerReveal(wasCorrect, card?.quizPrompt?.answerText || '');
+    }
 
     // Speak the answer text
     if (card?.quizPrompt?.answerText) {
@@ -263,16 +270,16 @@ class AudioEngine {
         this.speechPlayer.speak(card.quizPrompt.answerText, {
           wpm: this.modeConfig?.wpm || 150,
           onEnd: () => {
-            this._markCardComplete(card, wasCorrect ? 'correct' : (answer === 'timeout' ? 'skipped' : 'wrong'));
+            this._markCardComplete(card, quizResult);
             this._advanceToNextCard();
           }
         });
-      }, 300);
+      }, 600);
     } else {
       setTimeout(() => {
-        this._markCardComplete(card, wasCorrect ? 'correct' : 'wrong');
+        this._markCardComplete(card, quizResult);
         this._advanceToNextCard();
-      }, 1500);
+      }, 1800);
     }
   }
 
@@ -290,7 +297,12 @@ class AudioEngine {
     const xp = quizResult === 'correct' ? 30 : quizResult === 'skipped' ? 10 : 20;
     this.xpEarned += xp;
 
-    const { nextLevel, nextReviewAt } = getNextReviewDate(card, quizResult === 'correct');
+    // Use stored reviewLevel if available (from prior sessions)
+    const storedProgress = this.progress[card.id];
+    const cardWithLevel = storedProgress?.reviewLevel !== undefined
+      ? { ...card, reviewLevel: storedProgress.reviewLevel }
+      : card;
+    const { nextLevel, nextReviewAt } = getNextReviewDate(cardWithLevel, quizResult === 'correct');
 
     this.progress[card.id] = {
       cardId: card.id,
