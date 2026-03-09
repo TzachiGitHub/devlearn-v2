@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0F1117">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,7 +12,8 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- ══════ PROGRESS BAR (top, always visible during lesson) ══════ -->
+
+  <!-- ══════ PROGRESS BAR ══════ -->
   <div id="progress-bar" class="progress-bar hidden">
     <div id="progress-fill" class="progress-fill"></div>
   </div>
@@ -50,9 +51,7 @@
       </button>
       <div id="card-indicator" class="card-indicator"></div>
     </div>
-    <div id="card-stage" class="card-stage">
-      <!-- Cards rendered here dynamically -->
-    </div>
+    <div id="card-stage" class="card-stage"></div>
     <div class="lesson-nav">
       <button id="btn-prev" class="btn-nav" onclick="app.prevCard()" aria-label="Previous card">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -70,8 +69,8 @@
       <h2 class="celebration-heading">Chapter complete!</h2>
       <div id="celebration-xp" class="celebration-xp"></div>
       <ul id="celebration-list" class="celebration-list"></ul>
-      <button id="btn-celebrate-next" class="btn-celebrate-next" onclick="app.nextChapter()">Continue &rarr;</button>
-      <button class="btn-celebrate-home" onclick="app.showHome()">Back to home</button>
+      <button id="btn-celebrate-next" class="btn-celebrate-next">Continue &rarr;</button>
+      <button class="btn-celebrate-home" onclick="app.exitLesson()">Back to home</button>
     </div>
   </div>
 

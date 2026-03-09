@@ -26,6 +26,7 @@ const SUBJECTS = [
 ];
 
 const CHAPTERS = {
+
   // ═══════════════════════════════════════════
   // CHAPTER 1: What is EDA?
   // ═══════════════════════════════════════════
@@ -48,13 +49,9 @@ const CHAPTERS = {
         realWorld: {
           icon: '🍕',
           title: 'Waiting for Pizza',
-          text: 'You keep opening the door every 30 seconds to check if the delivery person is there. Exhausting and pointless.'
+          explanation: 'Imagine opening your front door every 30 seconds to check if the delivery person is there. Exhausting! Now imagine you just have a doorbell — when the pizza arrives, it rings, and you react.'
         },
-        techEquivalent: {
-          icon: '🔔',
-          title: 'Event-Driven Pizza',
-          text: 'You have a doorbell. When the pizza arrives, it rings. You react only when something actually happens.'
-        }
+        connection: 'EDA works the same way: instead of constantly checking, your code reacts when something actually happens.'
       },
       {
         type: 'concept',
@@ -65,18 +62,10 @@ const CHAPTERS = {
       },
       {
         type: 'code',
-        language: 'javascript',
-        title: 'A Simple Event',
-        code: `// An event is just data about what happened
-{
-  "eventType": "user.registered",
-  "timestamp": "2026-03-09T14:30:00Z",
-  "data": {
-    "userId": "usr_456",
-    "email": "user@example.com"
-  }
-}`,
-        label: 'Events use past tense — they describe what already happened'
+        label: 'Event Structure',
+        language: 'json',
+        snippet: '{\n  "eventType": "user.registered",\n  "timestamp": "2026-03-09T14:30:00Z",\n  "data": {\n    "userId": "usr_456",\n    "email": "user@example.com"\n  }\n}',
+        why: 'Events use past tense — they describe what already happened. "user.registered" not "user.register".'
       },
       {
         type: 'quiz',
@@ -91,22 +80,22 @@ const CHAPTERS = {
       },
       {
         type: 'fill-blank',
-        instruction: 'Events should be named in which tense?',
-        code: 'eventType: "order.___"',
-        blank: '___',
-        options: ['place', 'placed', 'placing'],
-        correct: 1,
-        explanation: 'Events describe what already happened, so we use past tense: order.placed, user.registered, payment.processed.'
+        prefix: 'eventType: "order.',
+        suffix: '"',
+        blank: 'placed',
+        hint: 'Events describe what already happened',
+        options: ['place', 'placed', 'placing']
       },
       {
         type: 'summary',
-        learned: [
+        title: 'You learned the basics of EDA!',
+        xpEarned: 120,
+        recap: [
           'EDA = react to events, don\'t constantly check',
           'Three building blocks: Event, Publisher, Subscriber',
           'Events are named in past tense',
           'Used by Uber, Netflix, Slack, and more'
-        ],
-        nextChapter: 'Traditional vs Event-Driven'
+        ]
       }
     ]
   },
@@ -132,44 +121,24 @@ const CHAPTERS = {
         type: 'analogy',
         realWorld: {
           icon: '📋',
-          title: 'Traditional: The Micromanager',
-          text: 'A boss calls each employee one by one, waits for them to finish, then calls the next. If one person is sick, everything stops.'
+          title: 'The Micromanager Boss',
+          explanation: 'A boss calls each employee one by one, waits for them to finish, then calls the next. If one person is sick, everything stops. That\'s traditional architecture — tightly coupled and fragile.'
         },
-        techEquivalent: {
-          icon: '📢',
-          title: 'Event-Driven: The Announcement',
-          text: 'The boss announces "new project started!" over the PA system. Each department hears it and independently does their part.'
-        }
+        connection: 'In EDA, the boss just announces "new project started!" — each department hears it and independently does their part.'
       },
       {
         type: 'code',
+        label: 'Traditional: Tightly Coupled',
         language: 'javascript',
-        title: 'Traditional: Tightly Coupled',
-        code: `function registerUser(userData) {
-  const user = database.save(userData);
-  emailService.sendWelcome(user.email);
-  profileService.create(user.id);
-  analytics.track('registered', user);
-  adminNotifier.notify(user);
-  return user; // User waits for ALL steps
-}`,
-        label: 'Registration knows about every service — if email breaks, registration breaks'
+        snippet: 'function registerUser(userData) {\n  const user = database.save(userData);\n  emailService.sendWelcome(user.email);\n  profileService.create(user.id);\n  analytics.track(\'registered\', user);\n  adminNotifier.notify(user);\n  return user; // User waits for ALL steps\n}',
+        why: 'Registration knows about every service — if email breaks, registration breaks too.'
       },
       {
         type: 'code',
+        label: 'Event-Driven: Loosely Coupled',
         language: 'javascript',
-        title: 'Event-Driven: Loosely Coupled',
-        code: `function registerUser(userData) {
-  const user = database.save(userData);
-  eventBus.publish('user.registered', user);
-  return user; // Done! 200ms response
-}
-
-// Each service subscribes independently
-eventBus.on('user.registered', (user) => {
-  emailService.sendWelcome(user.email);
-});`,
-        label: 'Registration only publishes an event — services react on their own'
+        snippet: 'function registerUser(userData) {\n  const user = database.save(userData);\n  eventBus.publish(\'user.registered\', user);\n  return user; // Done! 200ms response\n}\n\n// Each service subscribes independently\neventBus.on(\'user.registered\', (user) => {\n  emailService.sendWelcome(user.email);\n});',
+        why: 'Registration only publishes an event — services react on their own. User gets instant response.'
       },
       {
         type: 'quiz',
@@ -184,22 +153,22 @@ eventBus.on('user.registered', (user) => {
       },
       {
         type: 'fill-blank',
-        instruction: 'In EDA, the registration function just needs to:',
-        code: 'eventBus.___(\'user.registered\', user);',
-        blank: '___',
-        options: ['subscribe', 'publish', 'delete'],
-        correct: 1,
-        explanation: 'The publisher uses eventBus.publish() to announce what happened. Subscribers listen separately.'
+        prefix: 'eventBus.',
+        suffix: '(\'user.registered\', user);',
+        blank: 'publish',
+        hint: 'The registration function needs to announce what happened',
+        options: ['subscribe', 'publish', 'delete']
       },
       {
         type: 'summary',
-        learned: [
+        title: 'Traditional vs Event-Driven — done!',
+        xpEarned: 120,
+        recap: [
           'Traditional = sequential, tightly coupled, slow',
           'Event-Driven = announce + react, loosely coupled, fast',
           'Adding features = just add a new subscriber',
           'User gets 200ms response instead of 2-5 seconds'
-        ],
-        nextChapter: 'Publishers & Subscribers'
+        ]
       }
     ]
   },
@@ -226,52 +195,23 @@ eventBus.on('user.registered', (user) => {
         realWorld: {
           icon: '📻',
           title: 'Radio Station',
-          text: 'A radio station broadcasts music. It doesn\'t know who\'s listening or how many. Listeners tune in to the frequency they want.'
+          explanation: 'A radio station broadcasts music without knowing who\'s listening or how many. Listeners tune in to the frequency they care about, independently of the station.'
         },
-        techEquivalent: {
-          icon: '🔀',
-          title: 'Event Bus',
-          text: 'A publisher emits events to the event bus. It doesn\'t know who subscribes. Subscribers listen for events they care about.'
-        }
+        connection: 'Publishers emit events to the event bus without knowing who subscribes. Subscribers listen for events they care about.'
       },
       {
         type: 'code',
+        label: 'Anatomy of an Event',
         language: 'json',
-        title: 'Anatomy of an Event',
-        code: `{
-  "eventType": "user.registered",
-  "eventId": "evt_123abc",
-  "timestamp": "2026-03-09T14:30:00Z",
-  "data": {
-    "userId": "usr_456",
-    "email": "user@example.com",
-    "name": "John Doe"
-  },
-  "metadata": {
-    "source": "user-service",
-    "version": "1.0"
-  }
-}`,
-        label: 'Events are immutable — once created, they never change'
+        snippet: '{\n  "eventType": "user.registered",\n  "eventId": "evt_123abc",\n  "timestamp": "2026-03-09T14:30:00Z",\n  "data": {\n    "userId": "usr_456",\n    "email": "user@example.com",\n    "name": "John Doe"\n  },\n  "metadata": {\n    "source": "user-service",\n    "version": "1.0"\n  }\n}',
+        why: 'Events are immutable — once created, they never change. They\'re a permanent record of what happened.'
       },
       {
         type: 'code',
+        label: 'Publisher Pattern',
         language: 'javascript',
-        title: 'Publisher Pattern',
-        code: `class UserService {
-  register(userData) {
-    const user = this.saveToDatabase(userData);
-
-    // Publisher announces what happened
-    eventBus.publish({
-      eventType: 'user.registered',
-      data: user
-    });
-
-    return user; // Fire and forget!
-  }
-}`,
-        label: 'Publishers don\'t care who listens — they just announce'
+        snippet: 'class UserService {\n  register(userData) {\n    const user = this.saveToDatabase(userData);\n\n    // Publisher announces what happened\n    eventBus.publish({\n      eventType: \'user.registered\',\n      data: user\n    });\n\n    return user; // Fire and forget!\n  }\n}',
+        why: 'Publishers don\'t care who listens — they just announce. This is the "fire and forget" principle.'
       },
       {
         type: 'quiz',
@@ -282,26 +222,26 @@ eventBus.on('user.registered', (user) => {
           'Wait for all subscribers to finish processing'
         ],
         correct: 1,
-        explanation: 'Publishers use the "fire and forget" principle — they emit the event and move on. They don\'t know or care who subscribes.'
+        explanation: 'Publishers use the "fire and forget" principle — they emit the event and move on.'
       },
       {
         type: 'fill-blank',
-        instruction: 'A subscriber registers interest in events like this:',
-        code: 'eventBus.___("user.registered", handleEvent);',
-        blank: '___',
-        options: ['publish', 'subscribe', 'emit'],
-        correct: 1,
-        explanation: 'Subscribers use eventBus.subscribe() to listen for specific event types they care about.'
+        prefix: 'eventBus.',
+        suffix: '("user.registered", handleEvent);',
+        blank: 'subscribe',
+        hint: 'A subscriber needs to register interest in events',
+        options: ['publish', 'subscribe', 'emit']
       },
       {
         type: 'summary',
-        learned: [
+        title: 'Publishers & Subscribers — nailed it!',
+        xpEarned: 120,
+        recap: [
           'Events = immutable records of what happened',
           'Publishers = announce events (fire and forget)',
           'Subscribers = listen and react independently',
           'They never need to know about each other'
-        ],
-        nextChapter: 'The Pub/Sub Pattern'
+        ]
       }
     ]
   },
@@ -328,66 +268,23 @@ eventBus.on('user.registered', (user) => {
         realWorld: {
           icon: '📺',
           title: 'YouTube Subscriptions',
-          text: 'You subscribe to channels you like. When a creator uploads (publishes), YouTube notifies all subscribers. The creator doesn\'t email each viewer.'
+          explanation: 'You subscribe to channels you like. When a creator uploads (publishes), YouTube notifies all subscribers automatically. The creator doesn\'t email each viewer individually.'
         },
-        techEquivalent: {
-          icon: '📡',
-          title: 'Topic-Based Messaging',
-          text: 'Services subscribe to topics like "user.events" or "orders". When a publisher sends to that topic, all subscribers get the message automatically.'
-        }
+        connection: 'Pub/Sub works the same: services subscribe to topics, and when a publisher sends to that topic, all subscribers get the message.'
       },
       {
-        type: 'diagram',
-        title: 'Pub/Sub Message Flow',
-        parts: [
-          { label: 'Publisher 1', position: 'left-top' },
-          { label: 'Publisher 2', position: 'left-mid' },
-          { label: 'Publisher 3', position: 'left-bottom' },
-          { label: 'Topic: "user.events"', position: 'center' },
-          { label: 'Subscriber A', position: 'right-top' },
-          { label: 'Subscriber B', position: 'right-mid' },
-          { label: 'Subscriber C', position: 'right-bottom' }
-        ],
-        svg: `<svg viewBox="0 0 400 200" class="diagram-svg">
-          <rect x="10" y="15" width="90" height="30" rx="6" fill="#7C3AED" opacity="0.3" stroke="#7C3AED"/>
-          <text x="55" y="35" text-anchor="middle" fill="#E5E7EB" font-size="11">Publisher 1</text>
-          <rect x="10" y="85" width="90" height="30" rx="6" fill="#7C3AED" opacity="0.3" stroke="#7C3AED"/>
-          <text x="55" y="105" text-anchor="middle" fill="#E5E7EB" font-size="11">Publisher 2</text>
-          <rect x="10" y="155" width="90" height="30" rx="6" fill="#7C3AED" opacity="0.3" stroke="#7C3AED"/>
-          <text x="55" y="175" text-anchor="middle" fill="#E5E7EB" font-size="11">Publisher 3</text>
-          <rect x="140" y="70" width="120" height="60" rx="10" fill="#1A1D2E" stroke="#7C3AED" stroke-width="2"/>
-          <text x="200" y="95" text-anchor="middle" fill="#7C3AED" font-size="11" font-weight="bold">Topic:</text>
-          <text x="200" y="115" text-anchor="middle" fill="#E5E7EB" font-size="10">"user.events"</text>
-          <rect x="300" y="15" width="90" height="30" rx="6" fill="#10B981" opacity="0.3" stroke="#10B981"/>
-          <text x="345" y="35" text-anchor="middle" fill="#E5E7EB" font-size="11">Sub A</text>
-          <rect x="300" y="85" width="90" height="30" rx="6" fill="#10B981" opacity="0.3" stroke="#10B981"/>
-          <text x="345" y="105" text-anchor="middle" fill="#E5E7EB" font-size="11">Sub B</text>
-          <rect x="300" y="155" width="90" height="30" rx="6" fill="#10B981" opacity="0.3" stroke="#10B981"/>
-          <text x="345" y="175" text-anchor="middle" fill="#E5E7EB" font-size="11">Sub C</text>
-          <line x1="100" y1="30" x2="140" y2="90" stroke="#7C3AED" stroke-width="1.5" opacity="0.6"/>
-          <line x1="100" y1="100" x2="140" y2="100" stroke="#7C3AED" stroke-width="1.5" opacity="0.6"/>
-          <line x1="100" y1="170" x2="140" y2="110" stroke="#7C3AED" stroke-width="1.5" opacity="0.6"/>
-          <line x1="260" y1="90" x2="300" y2="30" stroke="#10B981" stroke-width="1.5" opacity="0.6"/>
-          <line x1="260" y1="100" x2="300" y2="100" stroke="#10B981" stroke-width="1.5" opacity="0.6"/>
-          <line x1="260" y1="110" x2="300" y2="170" stroke="#10B981" stroke-width="1.5" opacity="0.6"/>
-        </svg>`
+        type: 'concept',
+        icon: '🔀',
+        title: 'The Message Flow',
+        body: 'Multiple <strong>Publishers</strong> send to a Topic. The <strong>Broker</strong> routes messages. Multiple <strong>Subscribers</strong> receive from that Topic independently.',
+        highlight: 'Key pieces: Topic (named channel), Publisher (sends), Subscriber (receives), Broker (routes).'
       },
       {
         type: 'code',
+        label: 'Pub/Sub in Action',
         language: 'javascript',
-        title: 'Pub/Sub in Action',
-        code: `// Publisher sends to a topic
-eventBus.publish('orders', {
-  orderId: 123,
-  amount: 99.99,
-  userId: 'usr_456'
-});
-
-// Multiple subscribers on same topic
-eventBus.subscribe('orders', sendConfirmation);
-eventBus.subscribe('orders', updateInventory);
-eventBus.subscribe('orders', logAnalytics);`,
-        label: 'One publish, multiple subscribers — each reacts independently'
+        snippet: '// Publisher sends to a topic\neventBus.publish(\'orders\', {\n  orderId: 123,\n  amount: 99.99,\n  userId: \'usr_456\'\n});\n\n// Multiple subscribers on same topic\neventBus.subscribe(\'orders\', sendConfirmation);\neventBus.subscribe(\'orders\', updateInventory);\neventBus.subscribe(\'orders\', logAnalytics);',
+        why: 'One publish, multiple subscribers — each reacts independently. Add new subscribers without changing publisher code.'
       },
       {
         type: 'quiz',
@@ -402,22 +299,22 @@ eventBus.subscribe('orders', logAnalytics);`,
       },
       {
         type: 'fill-blank',
-        instruction: 'To receive messages, a service must:',
-        code: 'eventBus.subscribe("___", handleOrder);',
-        blank: '___',
-        options: ['orders', 'function', 'database'],
-        correct: 0,
-        explanation: 'Subscribers listen to specific topics (like "orders") — they only receive messages published to that topic.'
+        prefix: 'eventBus.subscribe("',
+        suffix: '", handleOrder);',
+        blank: 'orders',
+        hint: 'You subscribe to a specific topic name',
+        options: ['orders', 'function', 'database']
       },
       {
         type: 'summary',
-        learned: [
+        title: 'Pub/Sub Pattern — complete!',
+        xpEarned: 120,
+        recap: [
           'Pub/Sub = topic-based message distribution',
           'Publishers send to topics, subscribers listen to topics',
           'A broker manages delivery between them',
           'Used by YouTube, Slack, Google Cloud, AWS, Redis'
-        ],
-        nextChapter: 'Event Sourcing'
+        ]
       }
     ]
   },
@@ -444,31 +341,16 @@ eventBus.subscribe('orders', logAnalytics);`,
         realWorld: {
           icon: '🏦',
           title: 'Your Bank Account',
-          text: 'Your bank doesn\'t just store "$500." It stores every deposit, withdrawal, and transfer. Your balance is calculated by replaying all transactions.'
+          explanation: 'Your bank doesn\'t just store "$500." It stores every deposit, withdrawal, and transfer ever made. Your balance is calculated by replaying all those transactions.'
         },
-        techEquivalent: {
-          icon: '📝',
-          title: 'Event Store',
-          text: 'Instead of UPDATE balance=500, you append events: "deposited $1000", "withdrew $300", "withdrew $200". Current state = replay all events.'
-        }
+        connection: 'Event Sourcing works the same: instead of UPDATE balance=500, you append events and calculate state by replaying them.'
       },
       {
         type: 'code',
+        label: 'Traditional vs Event Sourcing',
         language: 'javascript',
-        title: 'Traditional vs Event Sourcing',
-        code: `// Traditional: Only current state
-{ userId: 123, balance: 500 }
-// How did we get to 500? No idea.
-
-// Event Sourcing: Full history
-[
-  { type: 'AccountCreated', balance: 0 },
-  { type: 'Deposited', amount: 1000 },
-  { type: 'Withdrew', amount: 300 },
-  { type: 'Withdrew', amount: 200 }
-]
-// 0 + 1000 - 300 - 200 = 500 ✓`,
-        label: 'Event Sourcing gives you time travel — reconstruct any past state'
+        snippet: '// Traditional: Only current state\n{ userId: 123, balance: 500 }\n// How did we get to 500? No idea.\n\n// Event Sourcing: Full history\n[\n  { type: \'AccountCreated\', balance: 0 },\n  { type: \'Deposited\', amount: 1000 },\n  { type: \'Withdrew\', amount: 300 },\n  { type: \'Withdrew\', amount: 200 }\n]\n// 0 + 1000 - 300 - 200 = 500',
+        why: 'Event Sourcing gives you time travel — reconstruct the exact state at any point in the past.'
       },
       {
         type: 'concept',
@@ -490,22 +372,22 @@ eventBus.subscribe('orders', logAnalytics);`,
       },
       {
         type: 'fill-blank',
-        instruction: 'Events in Event Sourcing are:',
-        code: '// Events are ___ — never changed after creation',
-        blank: '___',
-        options: ['mutable', 'immutable', 'deletable'],
-        correct: 1,
-        explanation: 'Events are immutable — once something happened, you can\'t un-happen it. You can only add new events (like a correction).'
+        prefix: '// Events are ',
+        suffix: ' — never changed after creation',
+        blank: 'immutable',
+        hint: 'Once something happened, you can\'t un-happen it',
+        options: ['mutable', 'immutable', 'deletable']
       },
       {
         type: 'summary',
-        learned: [
+        title: 'Event Sourcing — mastered!',
+        xpEarned: 120,
+        recap: [
           'Event Sourcing = store events, not just current state',
           'Events are immutable and append-only',
           'Current state = replay all events',
           'Used by banks, Netflix, GitHub for audit trails'
-        ],
-        nextChapter: null
+        ]
       }
     ]
   },
@@ -533,13 +415,9 @@ eventBus.subscribe('orders', logAnalytics);`,
         realWorld: {
           icon: '📋',
           title: 'Sticky Notes on Your Desk',
-          text: 'Your desk has sticky notes with quick info. Way faster to glance at than opening a filing cabinet. That\'s Redis vs a traditional database.'
+          explanation: 'Your desk has sticky notes with quick info you need often. Way faster to glance at than opening a filing cabinet every time. That\'s Redis vs a traditional database.'
         },
-        techEquivalent: {
-          icon: '⚡',
-          title: 'In-Memory Speed',
-          text: 'Redis keeps data in RAM (your desk) instead of disk (filing cabinet). Result: microsecond response times instead of milliseconds.'
-        }
+        connection: 'Redis keeps data in RAM (your desk) instead of disk (filing cabinet). Result: microsecond response times.'
       }
     ]
   },
@@ -567,13 +445,9 @@ eventBus.subscribe('orders', logAnalytics);`,
         realWorld: {
           icon: '🧰',
           title: 'A Toolbox',
-          text: 'A toolbox has different tools for different jobs — hammer, screwdriver, wrench. You pick the right tool for the task.'
+          explanation: 'A toolbox has different tools for different jobs — hammer, screwdriver, wrench. You pick the right tool for the task, not use a hammer for everything.'
         },
-        techEquivalent: {
-          icon: '🗄️',
-          title: 'Data Type = Right Tool',
-          text: 'Redis data types are specialized tools. Lists for queues, Sets for unique items, Sorted Sets for leaderboards, Hashes for objects.'
-        }
+        connection: 'Redis data types are specialized tools: Lists for queues, Sets for unique items, Sorted Sets for leaderboards.'
       }
     ]
   },
@@ -601,13 +475,9 @@ eventBus.subscribe('orders', logAnalytics);`,
         realWorld: {
           icon: '📦',
           title: 'Shipping Container',
-          text: 'Before shipping containers, loading cargo was chaos — different sizes, shapes, handling. Containers standardized everything. Ship, train, truck — same box.'
+          explanation: 'Before shipping containers, loading cargo was chaos — different sizes, shapes, handling. Containers standardized everything. Ship, train, truck — same box works everywhere.'
         },
-        techEquivalent: {
-          icon: '🐳',
-          title: 'Docker Container',
-          text: 'Docker standardizes app deployment. Your app + dependencies + config = one container. Runs identically on any machine with Docker.'
-        }
+        connection: 'Docker standardizes app deployment. Your app + dependencies + config = one container that runs identically anywhere.'
       }
     ]
   },
@@ -635,13 +505,9 @@ eventBus.subscribe('orders', logAnalytics);`,
         realWorld: {
           icon: '🍰',
           title: 'Recipe vs Cake',
-          text: 'A recipe (image) tells you how to make a cake. You can bake many cakes (containers) from one recipe. Each cake is independent.'
+          explanation: 'A recipe (image) tells you how to make a cake. You can bake many cakes (containers) from one recipe. Each cake is independent and can be eaten separately.'
         },
-        techEquivalent: {
-          icon: '🏗️',
-          title: 'Build Once, Run Many',
-          text: 'docker build creates an image. docker run creates a container from that image. You can run 10 containers from 1 image.'
-        }
+        connection: 'docker build creates an image. docker run creates a container from it. Run 10 containers from 1 image.'
       }
     ]
   }

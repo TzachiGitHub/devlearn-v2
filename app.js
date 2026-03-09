@@ -49,6 +49,21 @@ function updateStreak(p) {
   return p;
 }
 
+// ── Audio feedback (Web Audio API) ──────────────────────────
+let _audioCtx = null;
+function playTone(freq, dur) {
+  try {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = _audioCtx.createOscillator();
+    const g = _audioCtx.createGain();
+    o.connect(g); g.connect(_audioCtx.destination);
+    o.frequency.value = freq; o.type = 'sine';
+    g.gain.setValueAtTime(0.08, _audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + dur / 1000);
+    o.start(); o.stop(_audioCtx.currentTime + dur / 1000);
+  } catch(e) {}
+}
+
 // ── App controller ───────────────────────────────────────────
 const app = {
   currentChapterId: null,
@@ -261,7 +276,7 @@ const app = {
     const card  = this.cards[this.currentCardIndex];
     if (!card) return;
 
-    this.answered = (card.type === 'concept' || card.type === 'analogy' || card.type === 'summary' || card.type === 'code');
+    this.answered = (card.type === 'concept' || card.type === 'analogy' || card.type === 'summary' || card.type === 'code' || card.type === 'diagram');
 
     // Remove old card
     const old = stage.querySelector('.card');
@@ -344,6 +359,12 @@ const app = {
         <div class="summary-xp">+${card.xpEarned} XP</div>
         ${card.recap ? `<ul class="summary-list">${card.recap.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}`;
 
+      case 'diagram': return `
+        <div class="card-icon">📊</div>
+        <div class="card-title">${card.title || 'Diagram'}</div>
+        ${card.svg || ''}
+        <div class="card-body" style="font-size:13px;color:var(--text-dim);text-align:center;margin-top:auto;">Tap Next to continue</div>`;
+
       default: return `<div class="card-body">${JSON.stringify(card)}</div>`;
     }
   },
@@ -365,10 +386,12 @@ const app = {
       btn.classList.add('correct');
       this.awardXP(10);
       this.answered = true;
+      playTone(880, 200);
     } else {
       btn.classList.add('wrong');
       options[correct].classList.add('correct');
       this.answered = true;
+      playTone(220, 200);
     }
     const expl = document.getElementById('quiz-explanation');
     if (expl) expl.classList.add('visible');
@@ -386,9 +409,11 @@ const app = {
       slot.classList.add('correct');
       this.awardXP(10);
       this.answered = true;
+      playTone(880, 200);
     } else {
       slot.textContent = answer;
       slot.classList.add('wrong');
+      playTone(220, 200);
       setTimeout(() => {
         slot.textContent = correct;
         slot.classList.remove('wrong');
