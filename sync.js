@@ -4,7 +4,7 @@
 const SUPABASE_URL  = 'https://mqnosenddinigyurvkwx.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xbm9zZW5kZGluaWd5dXJ2a3d4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNTkxNDcsImV4cCI6MjA4ODYzNTE0N30.o78QfqJdXA2jTVENbCcP1vHbDx1jksf1LId7SFylIKA';
 const DEVICE_KEY    = 'devlearn_device_id';
-const STORAGE_KEY   = 'devlearn_v2';
+
 const SYNC_INTERVAL = 30000; // sync every 30s
 
 function getDeviceId() {
@@ -56,7 +56,7 @@ async function sfetch(path, opts = {}) {
 
 async function pushProgress() {
   const key = getSyncKey();
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem('devlearn_v2');
   if (!raw) return;
   await sfetch('/rest/v1/progress', {
     method: 'POST',
@@ -77,7 +77,7 @@ async function pullProgress() {
   const remote = rows[0];
   const remoteTime = new Date(remote.updated_at).getTime();
 
-  const localRaw = localStorage.getItem(STORAGE_KEY);
+  const localRaw = localStorage.getItem('devlearn_v2');
   const localData = localRaw ? JSON.parse(localRaw) : {};
   const localTime = localData._savedAt || 0;
 
@@ -93,7 +93,7 @@ async function pullProgress() {
       lastActive: remoteTime > localTime ? remoteData.lastActive : localData.lastActive,
       _savedAt: Date.now()
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    localStorage.setItem('devlearn_v2', JSON.stringify(merged));
     return true;
   }
   return false;

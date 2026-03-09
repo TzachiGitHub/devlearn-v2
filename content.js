@@ -692,4 +692,3 @@ CHAPTERS['ts-generics'] = {
     { type: 'summary', title: 'Generics unlocked! 🧬', recap: ['Generics write reusable type-safe code', 'T is a type variable, inferred automatically', 'Used everywhere in React, arrays, Promises'], xpEarned: 110 }
   ]
 };
-SUBJECTS_END
