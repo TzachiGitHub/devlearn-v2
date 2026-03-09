@@ -17,13 +17,18 @@ function getDeviceId() {
 }
 
 // Get the best available sync key: user ID > device ID
+function parseJwt(token) {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '=='.slice(0, (4 - base64.length % 4) % 4);
+    return JSON.parse(atob(padded));
+  } catch { return null; }
+}
+
 function getSyncKey() {
   if (window.Auth?.session?.access_token) {
-    // Extract user ID from JWT
-    try {
-      const payload = JSON.parse(atob(window.Auth.session.access_token.split('.')[1]));
-      if (payload.sub) return 'user_' + payload.sub;
-    } catch {}
+    const payload = parseJwt(window.Auth.session.access_token);
+    if (payload?.sub) return 'user_' + payload.sub;
   }
   return getDeviceId();
 }
