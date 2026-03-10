@@ -104,6 +104,51 @@ const audioPage = (() => {
     }
   }
 
+  function seekSeconds(secs) {
+    // Web Speech API doesn't support true seeking — simulate by
+    // restarting current card speech and tracking a char offset
+    if (!engine) return;
+    const progress = document.getElementById('session-progress');
+    if (progress) {
+      const parts = progress.textContent.split('/');
+      if (parts.length === 2) {
+        const current = parseTimeStr(parts[0].trim());
+        const newTime = Math.max(0, current + secs);
+        // Update the display
+        progress.textContent = formatTime(newTime) + ' / ' + parts[1].trim();
+      }
+    }
+    // If using Web Speech, cancel and restart from approximate position
+    if (window.speechSynthesis) {
+      const wasPlaying = !window.speechSynthesis.paused;
+      window.speechSynthesis.cancel();
+      if (wasPlaying && engine.currentCard) {
+        const text = engine.currentCard.transcript || engine.currentCard.script || '';
+        // Estimate char position from time (avg 130 WPM ≈ 10 chars/sec)
+        const charsPerSec = 10;
+        const currentTime = (() => {
+          try { return parseTimeStr(document.getElementById('session-progress')?.textContent?.split('/')[0]?.trim() || '0:00'); } catch { return 0; }
+        })();
+        const startChar = Math.max(0, Math.min(text.length - 1, currentTime * charsPerSec));
+        const remaining = text.slice(startChar);
+        const u = new SpeechSynthesisUtterance(remaining);
+        u.rate = engine.speed || 1;
+        window.speechSynthesis.speak(u);
+      }
+    }
+  }
+
+  function parseTimeStr(str) {
+    const parts = str.split(':').map(Number);
+    return parts.length === 2 ? parts[0] * 60 + parts[1] : 0;
+  }
+
+  function formatTime(secs) {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
   function skipCard() {
     if (engine) engine.skipCard();
   }
@@ -345,7 +390,7 @@ const audioPage = (() => {
   }
 
   // ── Public API ────────────────────────────────────────────
-  return { init, togglePlay, skipCard, previousCard, toggleSpeed, switchMode, answerQuiz, restartSession };
+  return { init, togglePlay, skipCard, previousCard, seekSeconds, toggleSpeed, switchMode, answerQuiz, restartSession };
 
 })();
 
